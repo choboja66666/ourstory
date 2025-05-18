@@ -1,92 +1,158 @@
-<script type="module">
-  import { db, storage } from './firebase.js';
-  import {
-    collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-  import {
-    ref, uploadBytes, getDownloadURL
-  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-storage.js";
-
-  const diaryCol = collection(db, 'diary');
-  const form = document.getElementById('diary-form');
-  const list = document.getElementById('entriesList');
-  const photoInput = document.getElementById('photo');
-
-  let editingId = null;
-
-  // 업로드된 사진 Firebase Storage에 저장
-  async function uploadPhoto(file) {
-    const storageRef = ref(storage, 'diary/' + Date.now() + '_' + file.name);
-    const snapshot = await uploadBytes(storageRef, file);
-    return await getDownloadURL(snapshot.ref);
-  }
-
-  // 저장 또는 수정
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const date = form.date.value;
-    const mood = form.mood.value;
-    const content = form.content.value;
-    let photoUrl = '';
-
-    if (photoInput.files[0]) {
-      photoUrl = await uploadPhoto(photoInput.files[0]);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문둥닷컴 - 일기장</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f4f6;
+      padding-top: 4rem;
     }
-
-    if (editingId) {
-      await updateDoc(doc(db, 'diary', editingId), { date, mood, content, photo: photoUrl });
-      editingId = null;
-    } else {
-      await addDoc(diaryCol, { date, mood, content, photo: photoUrl });
+    .back-link {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      color: #1f2937;
+      text-decoration: none;
     }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 홈으로</a>
 
-    form.reset();
-    loadEntries();
-  });
+  <div class="max-w-3xl mx-auto px-6 py-12 space-y-12">
+    <!-- 일기 작성 폼 -->
+    <section>
+      <h1 class="text-3xl font-bold text-indigo-600 mb-6">일기 작성</h1>
+      <form id="diary-form" class="space-y-6 bg-white p-6 rounded-lg shadow">
+        <div>
+          <label class="block text-sm font-medium mb-1">날짜</label>
+          <input type="date" id="date" required class="w-full px-4 py-2 border rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">기분</label>
+          <select id="mood" class="w-full px-4 py-2 border rounded-md">
+            <option>😊 행복</option>
+            <option>😐 보통</option>
+            <option>😢 슬픔</option>
+            <option>😠 화남</option>
+            <option>😴 피곤</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">사진 첨부</label>
+          <input type="file" id="photo" accept="image/*" class="w-full" />
+          <div id="preview" class="mt-2"></div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">내용</label>
+          <textarea id="content" rows="6" required class="w-full px-4 py-2 border rounded-md"></textarea>
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">저장</button>
+      </form>
+    </section>
 
-  async function loadEntries() {
-    list.innerHTML = '';
-    const snapshot = await getDocs(diaryCol);
-    snapshot.forEach(docSnap => {
-      const entry = docSnap.data();
-      const div = document.createElement('div');
-      div.className = 'p-4 bg-white rounded shadow mb-4';
-      div.innerHTML = `
-        <p><strong>날짜:</strong> ${entry.date}</p>
-        <p><strong>기분:</strong> ${entry.mood}</p>
-        ${entry.photo ? `<img src="${entry.photo}" class="w-32 h-32 object-cover mt-2" />` : ''}
-        <p class="mt-2">${entry.content}</p>
-        <button class="edit text-yellow-600" data-id="${docSnap.id}">수정</button>
-        <button class="delete text-red-600 ml-4" data-id="${docSnap.id}">삭제</button>
-      `;
-      list.appendChild(div);
+    <!-- 저장된 일기 목록 -->
+    <section>
+      <h2 class="text-2xl font-bold text-indigo-600 mb-4">저장된 일기</h2>
+      <div id="entriesList" class="space-y-6"></div>
+    </section>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxzmgN0tAJv27T2h2JWsnpgQDZNoUguns",
+      authDomain: "ourstory-shared.firebaseapp.com",
+      projectId: "ourstory-shared",
+      storageBucket: "ourstory-shared.appspot.com",
+      messagingSenderId: "912303672959",
+      appId: "1:912303672959:web:d86696d49305c86877794a",
+      measurementId: "G-HJL3VM7J73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('diary-form');
+    const entriesList = document.getElementById('entriesList');
+    const preview = document.getElementById('preview');
+    let selectedFile = null;
+
+    document.getElementById('photo').addEventListener('change', e => {
+      selectedFile = e.target.files[0];
+      if (!selectedFile) return preview.innerHTML = '';
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        preview.innerHTML = `<img src="${event.target.result}" class="w-40 h-40 object-cover rounded" />`;
+      };
+      reader.readAsDataURL(selectedFile);
     });
 
-    // 이벤트 위임
-    list.querySelectorAll('.edit').forEach(btn =>
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        const entryDoc = await getDocs(diaryCol);
-        entryDoc.forEach(docSnap => {
-          if (docSnap.id === id) {
-            const entry = docSnap.data();
-            form.date.value = entry.date;
-            form.mood.value = entry.mood;
-            form.content.value = entry.content;
-            editingId = id;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const date = form.date.value;
+      const mood = form.mood.value;
+      const content = form.content.value;
+      const image = preview.querySelector('img')?.src || '';
+
+      await addDoc(collection(db, 'diaries'), {
+        date,
+        mood,
+        content,
+        image,
+        createdAt: Date.now()
+      });
+
+      form.reset();
+      preview.innerHTML = '';
+      loadEntries();
+    });
+
+    async function loadEntries() {
+      entriesList.innerHTML = '';
+      const querySnapshot = await getDocs(collection(db, 'diaries'));
+      querySnapshot.forEach(docSnap => {
+        const { date, mood, content, image } = docSnap.data();
+        const id = docSnap.id;
+        const div = document.createElement('div');
+        div.className = "bg-white rounded-lg shadow p-4 space-y-2";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <p class="text-sm text-gray-600">날짜: ${date}</p>
+            <button class="deleteBtn text-sm text-red-500 hover:underline" data-id="${id}">삭제</button>
+          </div>
+          <p class="text-sm">기분: ${mood}</p>
+          ${image ? `<img src="${image}" class="w-48 h-48 object-cover rounded" />` : ''}
+          <p class="whitespace-pre-line">${content}</p>
+        `;
+        entriesList.appendChild(div);
+      });
+
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm('정말 삭제할까요?')) {
+            await deleteDoc(doc(db, 'diaries', id));
+            loadEntries();
           }
         });
-      })
-    );
+      });
+    }
 
-    list.querySelectorAll('.delete').forEach(btn =>
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        await deleteDoc(doc(db, 'diary', id));
-        loadEntries();
-      })
-    );
-  }
-
-  window.addEventListener('DOMContentLoaded', loadEntries);
-</script>
+    window.addEventListener('DOMContentLoaded', loadEntries);
+  </script>
+</body>
+</html>
