@@ -40,7 +40,7 @@
         <input
           type="date"
           id="date"
-          name="date"        <!-- name 속성 추가 -->
+          name="date"
           class="w-full px-4 py-2 border rounded-md"
           required
         />
@@ -51,7 +51,7 @@
         <label class="block text-sm font-medium mb-1">기분</label>
         <select
           id="mood"
-          name="mood"        <!-- name 속성 추가 -->
+          name="mood"
           class="w-full px-4 py-2 border rounded-md"
         >
           <option>😊 행복</option>
@@ -62,13 +62,13 @@
         </select>
       </div>
 
-      <!-- 사진 첨부 -->
+      <!-- 사진 첨부 (리사이즈 후 미리보기) -->
       <div>
         <label class="block text-sm font-medium mb-1">사진 첨부</label>
         <input
           type="file"
           id="photo"
-          name="photo"       <!-- name 속성 추가 -->
+          name="photo"
           accept="image/*"
           class="w-full"
         />
@@ -80,14 +80,17 @@
         <label class="block text-sm font-medium mb-1">내용</label>
         <textarea
           id="content"
-          name="content"     <!-- name 속성 추가 -->
+          name="content"
           rows="6"
           class="w-full px-4 py-2 border rounded-md"
           required
         ></textarea>
       </div>
 
-      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+      <button
+        type="submit"
+        class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+      >
         저장
       </button>
     </form>
@@ -102,47 +105,104 @@
   </div>
 
   <script>
-    const form = document.getElementById('diary-form');
-    const preview = document.getElementById('preview');
+    // LocalStorage에 사용할 키
+    const STORAGE_KEY = 'diaryEntry';
 
-    // 사진 선택 시 미리보기
-    document.getElementById('photo').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
+    // 캔버스에서 리사이즈할 최대 크기 (px)
+    const MAX_DIMENSION = 800;
+
+    const form = document.getElementById('diary-form');
+    const previewContainer = document.getElementById('preview');
+
+    // 사진을 캔버스에 그려서 리사이즈한 DataURL을 반환하는 함수
+    function resizeImage(file) {
+      return new Promise(resolve => {
         const reader = new FileReader();
-        reader.onload = (event) => {
-          preview.innerHTML = `
-            <img src="${event.target.result}"
-                 class="w-40 h-40 object-cover rounded" />
-          `;
+        reader.onload = event => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+              if (width > height) {
+                height = Math.round((MAX_DIMENSION / width) * height);
+                width = MAX_DIMENSION;
+              } else {
+                width = Math.round((MAX_DIMENSION / height) * width);
+                height = MAX_DIMENSION;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            // JPEG 형식(품질 0.8)으로 변환
+            const resizedDataURL = canvas.toDataURL('image/jpeg', 0.8);
+            resolve(resizedDataURL);
+          };
+          img.onerror = () => {
+            resolve('');
+          };
+          img.src = event.target.result;
         };
         reader.readAsDataURL(file);
+      });
+    }
+
+    // 사진 선택 시 미리보기 영역에 리사이즈된 이미지를 표시
+    document.getElementById('photo').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        previewContainer.innerHTML = '';
+        return;
+      }
+      // 리사이즈 처리
+      const resizedDataURL = await resizeImage(file);
+      if (resizedDataURL) {
+        previewContainer.innerHTML = `
+          <img src="${resizedDataURL}" class="w-40 h-40 object-cover rounded" />
+        `;
       } else {
-        preview.innerHTML = '';
+        previewContainer.innerHTML = '';
       }
     });
 
     // 폼 제출 시 LocalStorage에 저장 및 화면에 표시
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      // name 속성 덕분에 form.date, form.mood, form.content 참조 가능
+
+      // 리사이즈된 미리보기 데이터URL을 가져옴
+      const previewImg = previewContainer.querySelector('img');
+      const photoDataURL = previewImg ? previewImg.src : '';
+
       const entry = {
         date: form.date.value,
         mood: form.mood.value,
         content: form.content.value,
-        photo: preview.querySelector('img')?.src || ''
+        photo: photoDataURL
       };
-      localStorage.setItem('diaryEntry', JSON.stringify(entry));
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
+      } catch (err) {
+        console.error('저장 중 오류:', err);
+        alert('이미지 용량이 너무 커서 저장할 수 없습니다.');
+        return;
+      }
+
       renderSavedEntry();
     });
 
     // 저장된 일기 렌더링
     function renderSavedEntry() {
-      const entry = JSON.parse(localStorage.getItem('diaryEntry'));
-      if (!entry) return;
+      const entryJSON = localStorage.getItem(STORAGE_KEY);
+      if (!entryJSON) return;
+
+      const entry = JSON.parse(entryJSON);
       document.getElementById('saved-entry').classList.remove('hidden');
       document.getElementById('saved-date').textContent = `날짜: ${entry.date}`;
       document.getElementById('saved-mood').textContent = `기분: ${entry.mood}`;
+
       if (entry.photo) {
         document.getElementById('saved-photo').innerHTML = `
           <img src="${entry.photo}"
@@ -151,9 +211,11 @@
       } else {
         document.getElementById('saved-photo').innerHTML = '';
       }
+
       document.getElementById('saved-content').textContent = entry.content;
     }
 
+    // 페이지 로드 때 저장된 일기가 있으면 표시
     window.addEventListener('DOMContentLoaded', renderSavedEntry);
   </script>
 </body>
