@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문둥닷컴</title>
+  <!-- Google Fonts: Noto Sans KR -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* 사용자 정의 CSS (Tailwind 유틸리티만으로도 구현 가능하지만, 아래 애니메이션은 직접 정의) */
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg, #6b46c1 0%, #b794f4 100%);
+    }
+    /* 둥근 하단 모서리 연출 */
+    .rounded-bottom {
+      border-bottom-left-radius: 1.5rem;
+      border-bottom-right-radius: 1.5rem;
+    }
+    /* '떠오르는' 애니메이션 */
+    @keyframes float {
+      0% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-15px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+    .animate-float {
+      animation: float 5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="antialiased text-gray-100">
+
+  <!-- =========================
+       헤더 (네비게이션 바)
+  ========================= -->
+  <header class="fixed top-0 w-full z-20 bg-gray-900">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+      <!-- 로고 텍스트 -->
+      <a href="#home" class="text-2xl font-bold text-white">문둥닷컴</a>
+
+      <!-- PC용 메뉴 -->
+      <nav class="hidden md:flex space-x-8">
+        <a href="#home" class="text-white hover:text-indigo-300">홈</a>
+        <a href="#about" class="text-gray-300 hover:text-white">일기</a>
+        <a href="#services" class="text-gray-300 hover:text-white">갤러리</a>
+        <a href="#portfolio" class="text-gray-300 hover:text-white">갤린더</a>
+        <a href="#contact" class="text-gray-300 hover:text-white">그 외</a>
+      </nav>
+
+      <!-- 모바일 메뉴 버튼 -->
+      <button
+        id="mobile-menu-button"
+        class="md:hidden text-gray-300 hover:text-white focus:outline-none"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- 모바일 메뉴 (초기 hidden) -->
+    <div id="mobile-menu" class="hidden bg-gray-800">
+      <div class="px-4 py-4 space-y-2">
+        <a href="#home" class="block text-white px-2 py-1 rounded hover:bg-gray-700">홈</a>
+        <a href="#about" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">소개</a>
+        <a href="#services" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">서비스</a>
+        <a href="#portfolio" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">포트폴리오</a>
+        <a href="#contact" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">연락처</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================
+       히어로 섹션
+  ========================= -->
+  <section
+    id="home"
+    class="hero-gradient rounded-bottom pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden"
+    style="min-height: 100vh"
+  >
+    <!-- 떠오르는 달 아이콘 -->
+    <div class="animate-float mb-8">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-20 w-20 text-white"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 3c.132 0 .263.002.394.006A9 9 0 1111.607 3C11.737 3 11.869 3 12 3z"/>
+      </svg>
+    </div>
+
+    <!-- 메인 타이틀 -->
+    <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4">
+      문둥닷컴에 오신 것을 환영합니다
+    </h1>
+
+    <!-- 서브 타이틀 -->
+    <p class="text-lg md:text-xl lg:text-2xl text-indigo-100 mb-8 max-w-2xl">
+      문둥이와 나의 일상 공유
+    </p>
+
+    <!-- 버튼 그룹 -->
+    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
+      <a
+        href="#about"
+        class="inline-block bg-white text-gray-900 font-medium px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition"
+      >
+        갤러리
+      </a>
+      <a
+        href="#contact"
+        class="inline-block bg-indigo-600 text-white font-medium px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
+      >
+        갤린더
+      </a>
+    </div>
+
+    <!-- 아래 화살표 아이콘 -->
+    <div class="absolute bottom-8">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-8 w-8 text-indigo-100 animate-bounce"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </section>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로컬 스토리지 갤러리</title>
+  <!-- Tailwind CSS 불러오기 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로컬 스토리지 갤러리</title>
+  <!-- Tailwind CSS 불러오기 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로컬 스토리지 갤러리</title>
+  <!-- Tailwind CSS 불러오기 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로컬 스토리지 갤러리</title>
+  <!-- Tailwind CSS 불러오기 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+  <!-- =========================
+       갤러리 업로드 섹션
+  ========================= -->
+  <section id="gallery" class="py-20 bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto px-6 text-center mb-8">
+      <h2 class="text-indigo-600 text-base font-semibold uppercase mb-2">갤러리</h2>
+      <p class="text-3xl font-extrabold text-gray-800 mb-4">우리의 일상 사진 업로드</p>
+      <p class="text-gray-600 text-lg">
+        사진을 선택하거나 이 영역에 드래그하면 즉시 미리보기가 생성됩니다.<br/>
+        원하는 이미지를 ✕ 버튼으로 개별 삭제할 수 있으며,<br/>
+        “저장” 버튼을 눌러 로컬스토리지에 보관할 수 있습니다.<br/>
+        페이지를 새로고침해도 저장된 이미지들이 유지됩니다.
+      </p>
+    </div>
+
+    <!-- 파일 선택 및 드래그&드롭 영역 -->
+    <div
+      id="upload-area"
+      class="max-w-4xl mx-auto px-6 py-10 border-2 border-dashed border-indigo-300 rounded-lg bg-white hover:bg-indigo-50 transition cursor-pointer relative"
+    >
+      <!-- 실제 파일 입력 (숨김) -->
+      <input
+        type="file"
+        id="file-input"
+        accept="image/*"
+        multiple
+        class="hidden"
+      />
+
+      <div class="flex flex-col items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4h10v12M5 8h14M7 20h10" />
+        </svg>
+        <p class="text-gray-500 mb-2">사진을 여기에 드래그하거나,</p>
+        <button
+          id="select-button"
+          class="inline-block bg-indigo-600 text-white font-medium px-6 py-2 rounded-md shadow hover:bg-indigo-700 transition"
+        >
+          이미지 선택
+        </button>
+        <p class="text-gray-400 mt-2 text-sm">여러 장의 이미지를 한 번에 선택할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <!-- 업로드된 이미지를 미리보기할 갤러리 컨테이너 -->
+    <div
+      id="preview-gallery"
+      class="mt-10 max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    >
+      <!-- JavaScript로 동적으로 <div><img/><button>x</button></div> 형태가 추가됩니다. -->
+    </div>
+
+    <!-- 저장 버튼 -->
+    <div class="mt-8 text-center">
+      <button
+        id="save-button"
+        class="inline-block bg-green-600 text-white font-medium px-8 py-3 rounded-md shadow hover:bg-green-700 transition disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+        disabled
+      >
+        저장
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       관련 JavaScript
+  ========================= -->
+  <script>
+    // localStorage에 저장할 키 이름
+    const STORAGE_KEY = 'galleryImages';
+
+    // 선택된 이미지들의 데이터 URL을 보관할 배열
+    // { name: '파일명', dataURL: 'data:image/...' }
+    let galleryImages = [];
+
+    // DOM 요소 참조
+    const uploadArea     = document.getElementById('upload-area');
+    const fileInput      = document.getElementById('file-input');
+    const selectButton   = document.getElementById('select-button');
+    const previewGallery = document.getElementById('preview-gallery');
+    const saveButton     = document.getElementById('save-button');
+
+    // -------------------
+    // 1) 초기 로드 시 localStorage에서 불러오기
+    // -------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          galleryImages = JSON.parse(saved);
+        } catch (e) {
+          galleryImages = [];
+        }
+      }
+      renderPreviews();
+    });
+
+    // -------------------
+    // 2) “이미지 선택” 버튼 클릭 → 숨겨진 file input 클릭
+    // -------------------
+    selectButton.addEventListener('click', () => fileInput.click());
+
+    // -------------------
+    // 3) 파일 선택이 완료되면 handleFiles 호출
+    // -------------------
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+      fileInput.value = ''; // 재선택 가능하도록 초기화
+    });
+
+    // -------------------
+    // 4) 드래그&드롭 이벤트 처리
+    // -------------------
+    ['dragenter', 'dragover'].forEach(evtName => {
+      uploadArea.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadArea.classList.add('bg-indigo-50');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evtName => {
+      uploadArea.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadArea.classList.remove('bg-indigo-50');
+      });
+    });
+    // drop 시 handleFiles 호출
+    uploadArea.addEventListener('drop', (e) => {
+      const dt    = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    });
+
+    // -------------------
+    // 5) handleFiles: 선택/드래그된 FileList를 Promise.all로 처리
+    // -------------------
+    function handleFiles(fileList) {
+      const filesArray = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+
+      // FileReader 비동기 처리를 Promise로 래핑
+      const readPromises = filesArray.map(file => {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({ name: file.name, dataURL: event.target.result });
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      // 모든 파일 읽기가 끝난 뒤 결과 배열을 galleryImages에 병합
+      Promise.all(readPromises).then(results => {
+        let added = false;
+        results.forEach(item => {
+          // 중복 검사: 이미 같은 dataURL이 있으면 건너뜀
+          if (!galleryImages.some(img => img.dataURL === item.dataURL)) {
+            galleryImages.push(item);
+            added = true;
+          }
+        });
+        if (added) {
+          renderPreviews();
+        }
+      });
+    }
+
+    // -------------------
+    // 6) renderPreviews: galleryImages 배열을 기반으로 썸네일 렌더
+    // -------------------
+    function renderPreviews() {
+      // 기존 미리보기들 제거
+      previewGallery.innerHTML = '';
+
+      // galleryImages 순회
+      galleryImages.forEach((item, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative overflow-hidden rounded-lg';
+
+        // 이미지 요소
+        const img = document.createElement('img');
+        img.src = item.dataURL;
+        img.alt = item.name;
+        img.className = 'w-full h-48 object-cover rounded-lg shadow-md';
+
+        // 삭제 버튼
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = `
+          absolute top-2 right-2 bg-white bg-opacity-75 text-gray-800 hover:bg-red-100
+          rounded-full p-1 focus:outline-none
+        `;
+        deleteBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        `;
+        deleteBtn.addEventListener('click', () => {
+          galleryImages.splice(index, 1);
+          renderPreviews();
+        });
+
+        // wrapper에 추가
+        wrapper.appendChild(img);
+        wrapper.appendChild(deleteBtn);
+        previewGallery.appendChild(wrapper);
+      });
+
+      // 저장 버튼 활성화/비활성화
+      saveButton.disabled = galleryImages.length === 0;
+
+      // 화면에 렌더링 후 localStorage에 저장
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(galleryImages));
+    }
+
+    // -------------------
+    // 7) 저장 버튼 클릭 시: 이미 localStorage로 저장된 상태이므로, 알림만 띄움
+    // -------------------
+    saveButton.addEventListener('click', () => {
+      if (galleryImages.length === 0) {
+        alert('저장할 이미지가 없습니다.');
+        return;
+      }
+      alert('모든 이미지가 웹(로컬 스토리지)에 저장되었습니다.');
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+  <!-- =========================
+       서비스 섹션
+  ========================= -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-indigo-600 text-base font-semibold uppercase mb-2">서비스</h2>
+      <p class="text-3xl font-extrabold text-gray-800 mb-4">제공하는 서비스</p>
+      <p class="text-gray-600 text-lg mb-8">
+        고객의 요구에 맞는 다양한 서비스를 제공합니다.
+      </p>
+    </div>
+    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- 카드 1: 웹 개발 -->
+      <div class="card bg-gray-50 rounded-xl shadow-lg overflow-hidden">
+        <div class="p-6">
+          <div class="h-16 w-16 rounded-md bg-indigo-500 text-white flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-medium text-gray-800 text-center mb-2">웹 개발</h3>
+          <p class="text-gray-600 text-center">
+            반응형 웹사이트, 웹 애플리케이션, 이커머스 솔루션 등 다양한 웹 개발 서비스를 제공합니다.
+          </p>
+        </div>
+      </div>
+      <!-- 카드 2: 모바일 앱 개발 -->
+      <div class="card bg-gray-50 rounded-xl shadow-lg overflow-hidden">
+        <div class="p-6">
+          <div class="h-16 w-16 rounded-md bg-indigo-500 text-white flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-medium text-gray-800 text-center mb-2">모바일 앱 개발</h3>
+          <p class="text-gray-600 text-center">
+            iOS, Android 플랫폼을 위한 네이티브 및 하이브리드 모바일 애플리케이션을 개발합니다.
+          </p>
+        </div>
+      </div>
+      <!-- 카드 3: 데이터 분석 -->
+      <div class="card bg-gray-50 rounded-xl shadow-lg overflow-hidden">
+        <div class="p-6">
+          <div class="h-16 w-16 rounded-md bg-indigo-500 text-white flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-medium text-gray-800 text-center mb-2">데이터 분석</h3>
+          <p class="text-gray-600 text-center">
+            빅데이터 분석, 데이터 시각화, 비즈니스 인텔리전스 솔루션을 제공합니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       포트폴리오 섹션
+  ========================= -->
+  <section id="portfolio" class="py-20 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-indigo-600 text-base font-semibold uppercase mb-2">포트폴리오</h2>
+      <p class="text-3xl font-extrabold text-gray-800 mb-4">주요 프로젝트</p>
+      <p class="text-gray-600 text-lg">
+        성공적으로 완료한 프로젝트들을 소개합니다.
+      </p>
+    </div>
+    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+      <!-- 포트폴리오 카드 1 -->
+      <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="h-40 bg-indigo-100 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-indigo-500" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">기업 웹사이트 리뉴얼</h3>
+          <p class="text-gray-600">
+            대기업 웹사이트 리뉴얼 프로젝트로, 반응형 디자인과 최신 기술을 적용하여 사용자 경험을 개선했습니다.
+          </p>
+        </div>
+      </div>
+      <!-- 포트폴리오 카드 2 -->
+      <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="h-40 bg-green-100 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-green-500" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        </div>
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">이커머스 플랫폼</h3>
+          <p class="text-gray-600">
+            중소기업을 위한 맞춤형 이커머스 플랫폼 개발로, 매출 증대와 고객 경험 향상에 기여했습니다.
+          </p>
+        </div>
+      </div>
+      <!-- 포트폴리오 카드 3 -->
+      <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="h-40 bg-blue-100 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-blue-500" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">모바일 헬스케어 앱</h3>
+          <p class="text-gray-600">
+            사용자의 건강 데이터를 관리하고 맞춤형 건강 조언을 제공하는 모바일 애플리케이션을 개발했습니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       연락처 섹션
+  ========================= -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-indigo-600 text-base font-semibold uppercase mb-2">연락처</h2>
+      <p class="text-3xl font-extrabold text-gray-800 mb-4">문의하기</p>
+      <p class="text-gray-600 text-lg">
+        궁금한 점이 있으시면 언제든지 연락주세요.
+      </p>
+    </div>
+    <div class="mt-12 max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10">
+      <!-- 연락처 정보 -->
+      <div class="bg-gray-50 rounded-xl shadow-lg p-8 space-y-6">
+        <h3 class="text-lg font-medium text-gray-800">연락처 정보</h3>
+        <div class="space-y-4">
+          <div class="flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500 mr-3" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <div class="text-gray-600 text-base">02-123-4567</div>
+          </div>
+          <div class="flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500 mr-3" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <div class="text-gray-600 text-base">info@moonjun.com</div>
+          </div>
+          <div class="flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500 mr-3" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <div class="text-gray-600 text-base">
+              서울특별시 강남구 테헤란로 123<br />MoonJun 빌딩 5층
+            </div>
+          </div>
+        </div>
+
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-gray-500">
+            <span class="sr-only">Facebook</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-gray-500">
+            <span class="sr-only">Instagram</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"
+                clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-gray-500">
+            <span class="sr-only">Twitter</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- 메시지 보내기 폼 -->
+      <div class="bg-gray-50 rounded-xl shadow-lg p-8">
+        <h3 class="text-lg font-medium text-gray-800 mb-4">메시지 보내기</h3>
+        <form id="contact-form" class="space-y-6">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">이름</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="홍길동"
+            />
+          </div>
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">이메일</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="example@email.com"
+            />
+          </div>
+          <div>
+            <label for="message" class="block text-sm font-medium text-gray-700">메시지</label>
+            <textarea
+              id="message"
+              name="message"
+              rows="4"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="문의 내용을 입력해주세요."
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="w-full inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow hover:bg-indigo-700 transition"
+          >
+            보내기
+          </button>
+        </form>
+        <div id="form-success" class="mt-4 hidden">
+          <div class="rounded-lg bg-green-50 p-4">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-green-400 mr-2" xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd" />
+              </svg>
+              <p class="text-green-800 font-medium">메시지가 성공적으로 전송되었습니다!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       푸터
+  ========================= -->
+  <footer class="bg-gray-900 text-gray-400">
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h4 class="text-sm font-semibold uppercase mb-4">회사 정보</h4>
+          <ul class="space-y-3">
+            <li><a href="#about" class="hover:text-white">소개</a></li>
+            <li><a href="#" class="hover:text-white">블로그</a></li>
+            <li><a href="#" class="hover:text-white">채용</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold uppercase mb-4">서비스</h4>
+          <ul class="space-y-3">
+            <li><a href="#services" class="hover:text-white">웹 개발</a></li>
+            <li><a href="#services" class="hover:text-white">모바일 앱 개발</a></li>
+            <li><a href="#services" class="hover:text-white">데이터 분석</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold uppercase mb-4">연락처</h4>
+          <ul class="space-y-3">
+            <li><a href="#contact" class="hover:text-white">문의하기</a></li>
+            <li><a href="#" class="hover:text-white">고객 지원</a></li>
+            <li><a href="#" class="hover:text-white">파트너십</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+        <div class="flex space-x-6">
+          <a href="#" class="hover:text-gray-200">
+            <span class="sr-only">Facebook</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="#" class="hover:text-gray-200">
+            <span class="sr-only">Instagram</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd"
+                d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"
+                clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="#" class="hover:text-gray-200">
+            <span class="sr-only">Twitter</span>
+            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+            </svg>
+          </a>
+        </div>
+        <p class="mt-8 text-base">&copy; 2023 MoonJun. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================
+       스크립트
+  ========================= -->
+  <script>
+    // 모바일 메뉴 토글
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+
+    // 폼 제출 데모
+    document.getElementById('contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('form-success').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('form-success').classList.add('hidden');
+      }, 3000);
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
