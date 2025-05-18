@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>문둥닷컴 - 일기장</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore-compat.js"></script>
   <style>
     body {
       font-family: 'Noto Sans KR', sans-serif;
       background: #f3f4f6;
-      padding-top: 4rem; /* 네비바 높이 만큼 여백 */
+      padding-top: 4rem;
     }
-    /* 홈으로 돌아가는 링크 스타일 */
     .back-link {
       position: absolute;
       top: 1rem;
@@ -27,35 +28,19 @@
   </style>
 </head>
 <body>
-  <!-- 홈으로 돌아가는 링크 -->
   <a href="index.html" class="back-link">← 홈으로</a>
 
   <div class="max-w-3xl mx-auto px-6 py-12 space-y-12">
-
-    <!-- 일기 작성/수정 폼 -->
     <section>
       <h1 class="text-3xl font-bold text-indigo-600 mb-6">일기 작성</h1>
       <form id="diary-form" class="space-y-6 bg-white p-6 rounded-lg shadow">
-        <!-- 날짜 -->
         <div>
           <label class="block text-sm font-medium mb-1">날짜</label>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            class="w-full px-4 py-2 border rounded-md"
-            required
-          />
+          <input type="date" id="date" required class="w-full px-4 py-2 border rounded-md" />
         </div>
-
-        <!-- 기분 -->
         <div>
           <label class="block text-sm font-medium mb-1">기분</label>
-          <select
-            id="mood"
-            name="mood"
-            class="w-full px-4 py-2 border rounded-md"
-          >
+          <select id="mood" class="w-full px-4 py-2 border rounded-md">
             <option>😊 행복</option>
             <option>😐 보통</option>
             <option>😢 슬픔</option>
@@ -63,288 +48,89 @@
             <option>😴 피곤</option>
           </select>
         </div>
-
-        <!-- 사진 첨부 -->
         <div>
           <label class="block text-sm font-medium mb-1">사진 첨부</label>
-          <input
-            type="file"
-            id="photo"
-            name="photo"
-            accept="image/*"
-            class="w-full"
-          />
+          <input type="file" id="photo" accept="image/*" class="w-full" />
           <div id="preview" class="mt-2"></div>
         </div>
-
-        <!-- 내용 -->
         <div>
           <label class="block text-sm font-medium mb-1">내용</label>
-          <textarea
-            id="content"
-            name="content"
-            rows="6"
-            class="w-full px-4 py-2 border rounded-md"
-            required
-          ></textarea>
+          <textarea id="content" rows="6" class="w-full px-4 py-2 border rounded-md" required></textarea>
         </div>
-
-        <button
-          type="submit"
-          id="submitBtn"
-          class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
-        >
+        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
           저장
-        </button>
-        <button
-          type="button"
-          id="cancelEditBtn"
-          class="hidden bg-gray-400 text-white px-6 py-2 rounded-md hover:bg-gray-500"
-        >
-          취소
         </button>
       </form>
     </section>
 
-    <!-- 저장된 일기 리스트 -->
     <section>
       <h2 class="text-2xl font-bold text-indigo-600 mb-4">저장된 일기 목록</h2>
-      <div id="entriesList" class="space-y-6">
-        <!-- JavaScript로 동적으로 각 일기 카드가 추가됩니다 -->
-      </div>
+      <div id="entriesList" class="space-y-6"></div>
     </section>
   </div>
 
+  <!-- Firebase 연결 및 Firestore 저장 로직 -->
   <script>
-    const STORAGE_KEY = 'diaryEntries';
-    const MAX_DIMENSION = 800; // 사진 리사이즈 최대 크기(px)
+    // ✅ 1. Firebase 설정
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxzmgN0tAJv27T2h2JWsnpgQDZNoUguns",
+      authDomain: "ourstory-shared.firebaseapp.com",
+      projectId: "ourstory-shared",
+      storageBucket: "ourstory-shared.appspot.com",
+      messagingSenderId: "912303672959",
+      appId: "1:912303672959:web:d86696d49305c86877794a",
+      measurementId: "G-HJL3VM7J73"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // 폼 및 관련 요소
+    // ✅ 2. 요소 가져오기
     const form = document.getElementById('diary-form');
-    const dateInput = document.getElementById('date');
-    const moodInput = document.getElementById('mood');
-    const photoInput = document.getElementById('photo');
-    const contentInput = document.getElementById('content');
-    const previewContainer = document.getElementById('preview');
-    const submitBtn = document.getElementById('submitBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const preview = document.getElementById('preview');
+    const entriesList = document.getElementById('entriesList');
 
-    // 일기 목록을 그릴 컨테이너
-    const entriesListContainer = document.getElementById('entriesList');
-
-    // 메모리 상에서의 일기 배열
-    let diaryEntries = [];
-
-    // 현재 편집 중인 인덱스 (기본값: null → 새로 작성)
-    let editingIndex = null;
-
-    /**
-     * 사진 파일을 캔버스에서 리사이즈하여 DataURL로 반환
-     * @param {File} file 
-     * @returns {Promise<string>} JPEG DataURL
-     */
-    function resizeImage(file) {
-      return new Promise(resolve => {
-        const reader = new FileReader();
-        reader.onload = event => {
-          const img = new Image();
-          img.onload = () => {
-            let { width, height } = img;
-            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-              if (width > height) {
-                height = Math.round((MAX_DIMENSION / width) * height);
-                width = MAX_DIMENSION;
-              } else {
-                width = Math.round((MAX_DIMENSION / height) * width);
-                height = MAX_DIMENSION;
-              }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            // JPEG 형식(품질 0.8)으로 변환
-            const resizedDataURL = canvas.toDataURL('image/jpeg', 0.8);
-            resolve(resizedDataURL);
-          };
-          img.onerror = () => resolve('');
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    /**
-     * 저장된 모든 일기를 화면에 리스트 형태로 렌더
-     */
-    function renderEntriesList() {
-      entriesListContainer.innerHTML = '';
-      if (diaryEntries.length === 0) {
-        entriesListContainer.innerHTML = '<p class="text-gray-500">저장된 일기가 없습니다.</p>';
-        return;
-      }
-
-      diaryEntries.forEach((entry, index) => {
-        const { date, mood, content, photo } = entry;
-
-        // 카드 요소 생성
-        const card = document.createElement('div');
-        card.className = 'bg-white rounded-lg shadow p-6 space-y-2';
-
-        // HTML 템플릿
-        card.innerHTML = `
-          <div class="flex justify-between items-center">
-            <p class="text-sm text-gray-600">날짜: ${date}</p>
-            <div class="space-x-2">
-              <button data-index="${index}" class="editBtn bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500 text-sm">수정</button>
-              <button data-index="${index}" class="deleteBtn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">삭제</button>
-            </div>
-          </div>
-          <p class="font-medium">기분: ${mood}</p>
-          ${photo ? `<img src="${photo}" class="w-48 h-48 object-cover rounded mb-2" />` : ''}
-          <p class="whitespace-pre-line">${content}</p>
-        `;
-        entriesListContainer.appendChild(card);
-      });
-
-      // “수정” 버튼 이벤트 연결
-      document.querySelectorAll('.editBtn').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-          startEditingEntry(idx);
-        });
-      });
-
-      // “삭제” 버튼 이벤트 연결
-      document.querySelectorAll('.deleteBtn').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-          deleteEntry(idx);
-        });
-      });
-    }
-
-    /**
-     * 특정 인덱스의 일기를 삭제
-     * @param {number} idx 
-     */
-    function deleteEntry(idx) {
-      if (!confirm('정말 이 일기를 삭제하시겠습니까?')) return;
-      diaryEntries.splice(idx, 1);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(diaryEntries));
-      // 편집 중이던 항목을 지우는 경우
-      if (editingIndex === idx) resetForm();
-      renderEntriesList();
-    }
-
-    /**
-     * 특정 인덱스의 일기를 “편집 모드”로 전환.
-     * 폼에 기존 내용을 채워 넣고, editingIndex를 설정
-     * @param {number} idx 
-     */
-    function startEditingEntry(idx) {
-      const entry = diaryEntries[idx];
-      if (!entry) return;
-      editingIndex = idx;
-      dateInput.value = entry.date;
-      moodInput.value = entry.mood;
-      contentInput.value = entry.content;
-      // 미리보기에 사진 표시
-      if (entry.photo) {
-        previewContainer.innerHTML = `<img src="${entry.photo}" class="w-40 h-40 object-cover rounded" />`;
-      } else {
-        previewContainer.innerHTML = '';
-      }
-      submitBtn.textContent = '수정 저장';
-      cancelEditBtn.classList.remove('hidden');
-    }
-
-    /**
-     * 편집 모드 취소: form 초기화하고 editingIndex 제거
-     */
-    function resetForm() {
-      editingIndex = null;
-      form.reset();
-      previewContainer.innerHTML = '';
-      submitBtn.textContent = '저장';
-      cancelEditBtn.classList.add('hidden');
-    }
-
-    /**
-     * 페이지 로드 시, LocalStorage에 있던 일기 배열을 불러와 렌더
-     */
-    function loadEntries() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          diaryEntries = JSON.parse(saved);
-        } catch {
-          diaryEntries = [];
-        }
-      }
-      renderEntriesList();
-    }
-
-    // 사진 선택 시 → 리사이즈 후 미리보기
-    photoInput.addEventListener('change', async (e) => {
+    // ✅ 3. 미리보기
+    document.getElementById('photo').addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (!file) {
-        previewContainer.innerHTML = '';
-        return;
-      }
-      const resizedDataURL = await resizeImage(file);
-      if (resizedDataURL) {
-        previewContainer.innerHTML = `<img src="${resizedDataURL}" class="w-40 h-40 object-cover rounded" />`;
-      } else {
-        previewContainer.innerHTML = '';
-      }
+      if (!file) return (preview.innerHTML = '');
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.innerHTML = `<img src="${e.target.result}" class="w-40 h-40 object-cover rounded" />`;
+      };
+      reader.readAsDataURL(file);
     });
 
-    // 폼 제출(저장/수정) 처리
+    // ✅ 4. 저장
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      // 미리보기 이미지(리사이즈된 DataURL)를 가져옴
-      const previewImg = previewContainer.querySelector('img');
-      const photoDataURL = previewImg ? previewImg.src : '';
-
-      const newEntry = {
-        date: dateInput.value,
-        mood: moodInput.value,
-        content: contentInput.value,
-        photo: photoDataURL
+      const entry = {
+        date: document.getElementById('date').value,
+        mood: document.getElementById('mood').value,
+        content: document.getElementById('content').value,
+        photo: preview.querySelector('img')?.src || '',
+        timestamp: new Date().toISOString()
       };
-
-      if (editingIndex === null) {
-        // 새 일기 작성
-        diaryEntries.unshift(newEntry); // 가장 위에 추가 (최신 순)
-      } else {
-        // 기존 일기 수정
-        diaryEntries[editingIndex] = newEntry;
-        editingIndex = null;
-      }
-
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(diaryEntries));
-      } catch (err) {
-        console.error('저장 중 오류:', err);
-        alert('이미지 용량이 너무 커서 저장할 수 없습니다.');
-        return;
-      }
-
-      resetForm();
-      renderEntriesList();
+      await db.collection('diary').add(entry);
+      form.reset();
+      preview.innerHTML = '';
     });
 
-    // “취소” 버튼 클릭 시 편집 모드 취소
-    cancelEditBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      resetForm();
+    // ✅ 5. 불러오기
+    db.collection('diary').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+      entriesList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow p-6';
+        div.innerHTML = `
+          <p class="text-sm text-gray-500">날짜: ${d.date}</p>
+          <p class="text-base">기분: ${d.mood}</p>
+          ${d.photo ? `<img src="${d.photo}" class="w-40 h-40 object-cover rounded mt-2 mb-2" />` : ''}
+          <p class="whitespace-pre-line">${d.content}</p>
+        `;
+        entriesList.appendChild(div);
+      });
     });
-
-    // 페이지 로드 시 기존 일기들 불러오기
-    window.addEventListener('DOMContentLoaded', loadEntries);
   </script>
 </body>
 </html>
