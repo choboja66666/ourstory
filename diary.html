@@ -1,20 +1,150 @@
-<!-- Firebase SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문둥닷컴 - 일기장</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f4f6;
+      padding-top: 4rem;
+    }
+    .back-link {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      color: #1f2937;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 홈으로</a>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDxzmgN0tAJv27T2h2JWsnpgQDZNoUguns",
-    authDomain: "ourstory-shared.firebaseapp.com",
-    projectId: "ourstory-shared",
-    storageBucket: "ourstory-shared.appspot.com", <!-- 잘못된 storageBucket 도 수정함 -->
-    messagingSenderId: "912303672959",
-    appId: "1:912303672959:web:d86696d49305c86877794a",
-    measurementId: "G-HJL3VM7J73"
-  };
+  <div class="max-w-3xl mx-auto px-6 py-12 space-y-12">
+    <!-- 일기 작성 폼 -->
+    <section>
+      <h1 class="text-3xl font-bold text-indigo-600 mb-6">일기 작성</h1>
+      <form id="diary-form" class="space-y-6 bg-white p-6 rounded-lg shadow">
+        <div>
+          <label class="block text-sm font-medium mb-1">날짜</label>
+          <input type="date" id="date" required class="w-full px-4 py-2 border rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">기분</label>
+          <select id="mood" class="w-full px-4 py-2 border rounded-md">
+            <option>😊 행복</option>
+            <option>😐 보통</option>
+            <option>😢 슬픔</option>
+            <option>😠 화남</option>
+            <option>😴 피곤</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">사진 첨부</label>
+          <input type="file" id="photo" accept="image/*" class="w-full" />
+          <div id="preview" class="mt-2"></div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">내용</label>
+          <textarea id="content" rows="6" required class="w-full px-4 py-2 border rounded-md"></textarea>
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+          저장
+        </button>
+      </form>
+    </section>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    <!-- 일기 목록 -->
+    <section>
+      <h2 class="text-2xl font-bold text-indigo-600 mb-4">저장된 일기</h2>
+      <div id="entriesList" class="space-y-6"></div>
+    </section>
+  </div>
 
-  // 이후 Firestore 저장, 수정, 삭제, 불러오기 등 로직을 추가할 수 있습니다.
-</script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxzmgN0tAJv27T2h2JWsnpgQDZNoUguns",
+      authDomain: "ourstory-shared.firebaseapp.com",
+      projectId: "ourstory-shared",
+      storageBucket: "ourstory-shared.appspot.com",
+      messagingSenderId: "912303672959",
+      appId: "1:912303672959:web:d86696d49305c86877794a",
+      measurementId: "G-HJL3VM7J73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const diaryRef = collection(db, "diary");
+
+    const form = document.getElementById('diary-form');
+    const date = document.getElementById('date');
+    const mood = document.getElementById('mood');
+    const photo = document.getElementById('photo');
+    const content = document.getElementById('content');
+    const preview = document.getElementById('preview');
+    const entriesList = document.getElementById('entriesList');
+
+    let photoData = '';
+
+    // 사진 미리보기 및 base64 저장
+    photo.addEventListener('change', () => {
+      const file = photo.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        photoData = e.target.result;
+        preview.innerHTML = `<img src="${photoData}" class="w-40 h-40 object-cover rounded" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // 저장 버튼 클릭
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await addDoc(diaryRef, {
+          date: date.value,
+          mood: mood.value,
+          photo: photoData,
+          content: content.value,
+          timestamp: new Date()
+        });
+        form.reset();
+        preview.innerHTML = '';
+        photoData = '';
+      } catch (err) {
+        alert('저장 실패: ' + err.message);
+      }
+    });
+
+    // Firestore의 데이터 실시간 반영
+    onSnapshot(query(diaryRef, orderBy("timestamp", "desc")), (snapshot) => {
+      entriesList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const { date, mood, content, photo } = doc.data();
+        const entry = document.createElement('div');
+        entry.className = 'bg-white p-6 rounded-lg shadow space-y-2';
+        entry.innerHTML = `
+          <p class="text-sm text-gray-600">날짜: ${date}</p>
+          <p>기분: ${mood}</p>
+          ${photo ? `<img src="${photo}" class="w-48 h-48 object-cover rounded" />` : ''}
+          <p class="whitespace-pre-line">${content}</p>
+        `;
+        entriesList.appendChild(entry);
+      });
+    });
+  </script>
+</body>
+</html>
