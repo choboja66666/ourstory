@@ -56,7 +56,7 @@
     const gallery = document.getElementById('gallery');
     let imageList = [];
 
-    // 최대 가로/세로 크기 (800px)
+    // 최대 가로/세로 크기(px)
     const MAX_DIMENSION = 800;
 
     // 1) 페이지 로드 시 LocalStorage에서 불러오기
@@ -72,41 +72,44 @@
       renderGallery();
     }
 
-    // 2) imageList 기반으로 갤러리 렌더
+    // 2) imageList 배열 기반으로 썸네일과 삭제 버튼 렌더
     function renderGallery() {
       gallery.innerHTML = '';
       imageList.forEach(({ date, dataURL }, idx) => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded shadow p-4';
+        card.className = 'bg-white rounded shadow p-4 flex flex-col';
 
         card.innerHTML = `
           <img src="${dataURL}" class="w-full h-48 object-cover rounded mb-2" />
           <p class="text-sm text-gray-600 mb-2">${date}</p>
-          <button data-index="${idx}" class="deleteBtn bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+          <button data-index="${idx}" class="deleteBtn bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 self-end">
             삭제
           </button>
         `;
         gallery.appendChild(card);
       });
-      // 삭제 기능
+
+      // 삭제 버튼 이벤트 연결
       document.querySelectorAll('.deleteBtn').forEach(btn => {
         btn.addEventListener('click', e => {
           const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+          // 배열에서 해당 인덱스 삭제
           imageList.splice(idx, 1);
+          // LocalStorage에 저장
           localStorage.setItem(STORAGE_KEY, JSON.stringify(imageList));
+          // 다시 렌더링
           renderGallery();
         });
       });
     }
 
-    // 이미지 파일 -> 캔버스 리사이즈 -> DataURL 반환
+    // 3) 업로드된 파일을 캔버스에서 리사이즈한 뒤 DataURL 생성
     function resizeImage(file) {
       return new Promise(resolve => {
         const reader = new FileReader();
         reader.onload = event => {
           const img = new Image();
           img.onload = () => {
-            // 비율 계산
             let { width, height } = img;
             if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
               if (width > height) {
@@ -122,24 +125,20 @@
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            // 품질 0.8로 JPEG로 변환 (JPEG가 더 용량 작음)
             const resizedDataURL = canvas.toDataURL('image/jpeg', 0.8);
             resolve({ date: new Date().toLocaleString(), dataURL: resizedDataURL });
           };
-          img.onerror = () => {
-            resolve(null);
-          };
+          img.onerror = () => resolve(null);
           img.src = event.target.result;
         };
         reader.readAsDataURL(file);
       });
     }
 
-    // 3) 파일 선택 시 resizeImage로 처리 후 imageList 업데이트
+    // 4) 파일 선택 시 리사이즈 후 imageList에 추가하고 렌더
     input.addEventListener('change', () => {
       const files = Array.from(input.files).filter(f => f.type.startsWith('image/'));
       const promises = files.map(file => resizeImage(file));
-
       Promise.all(promises).then(results => {
         const valid = results.filter(item => item !== null);
         imageList.push(...valid);
@@ -147,7 +146,7 @@
       });
     });
 
-    // 4) 저장 버튼 클릭 시 LocalStorage에 기록
+    // 5) 저장 버튼 클릭 시 LocalStorage에 기록
     saveBtn.addEventListener('click', () => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(imageList));
@@ -158,7 +157,7 @@
       }
     });
 
-    // 5) 초기 로드
+    // 6) 초기 로드
     window.addEventListener('DOMContentLoaded', loadGallery);
   </script>
 </body>
