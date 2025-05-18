@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문둥닷컴 - 갤린더</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f4f6;
+      padding-top: 4rem;
+    }
+    .back-link {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      color: #1f2937;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 홈으로</a>
+
+  <div class="max-w-xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold text-indigo-600 mb-6">기념일 등록</h1>
+    <form id="event-form" class="space-y-4 bg-white p-6 rounded-lg shadow">
+      <div>
+        <label class="block text-sm font-medium">날짜</label>
+        <input type="date" id="event-date" class="w-full border rounded px-4 py-2" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">내용</label>
+        <input type="text" id="event-desc" class="w-full border rounded px-4 py-2" placeholder="예: 첫 만남, 여행, 생일 등" required>
+      </div>
+      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">저장</button>
+    </form>
+
+    <div class="mt-10">
+      <h2 class="text-xl font-bold mb-4">등록된 기념일</h2>
+      <ul id="event-list" class="space-y-3"></ul>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'calendarEvents';
+    const form = document.getElementById('event-form');
+    const list = document.getElementById('event-list');
+    let events = [];
+
+    // 페이지 로드 시 로컬스토리지에서 불러오기
+    function loadEvents() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) events = JSON.parse(saved);
+      renderEvents();
+    }
+
+    // 이벤트 목록 렌더링
+    function renderEvents() {
+      list.innerHTML = '';
+      events.forEach((e, i) => {
+        const li = document.createElement('li');
+        li.className = 'bg-white border rounded px-4 py-2 shadow flex justify-between items-center';
+        li.innerHTML = `<span><strong>${e.date}</strong>: ${e.desc}</span> <button class="text-red-500 hover:text-red-600 delete-btn">삭제</button>`;
+        list.appendChild(li);
+      });
+      document.querySelectorAll('.delete-btn').forEach((btn, idx) => {
+        btn.addEventListener('click', () => deleteEvent(idx));
+      });
+    }
+
+    // 이벤트 삭제
+    function deleteEvent(index) {
+      events.splice(index, 1);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      renderEvents();
+    }
+
+    // 폼 제출 시 이벤트 저장
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = form['event-date'].value;
+      const desc = form['event-desc'].value;
+      events.push({ date, desc });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      renderEvents();
+      form.reset();
+    });
+
+    window.addEventListener('DOMContentLoaded', loadEvents);
+  </script>
+</body>
+</html>

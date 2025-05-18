@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문둥닷컴 - 일기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f4f6;
+      padding-top: 4rem; /* 네비바 높이 만큼 여백 */
+    }
+    /* 홈으로 돌아가는 링크 스타일 */
+    .back-link {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      color: #1f2937;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <!-- 홈으로 돌아가는 링크 -->
+  <a href="index.html" class="back-link">← 홈으로</a>
+
+  <div class="max-w-2xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold text-indigo-600 mb-6">오늘의 일기</h1>
+
+    <form id="diary-form" class="space-y-6 bg-white p-6 rounded-lg shadow">
+      <!-- 날짜 -->
+      <div>
+        <label class="block text-sm font-medium mb-1">날짜</label>
+        <input type="date" id="date" class="w-full px-4 py-2 border rounded-md" required />
+      </div>
+      <!-- 기분 -->
+      <div>
+        <label class="block text-sm font-medium mb-1">기분</label>
+        <select id="mood" class="w-full px-4 py-2 border rounded-md">
+          <option>😊 행복</option>
+          <option>😐 보통</option>
+          <option>😢 슬픔</option>
+          <option>😠 화남</option>
+          <option>😴 피곤</option>
+        </select>
+      </div>
+      <!-- 사진 첨부 -->
+      <div>
+        <label class="block text-sm font-medium mb-1">사진 첨부</label>
+        <input type="file" id="photo" accept="image/*" class="w-full" />
+        <div id="preview" class="mt-2"></div>
+      </div>
+      <!-- 내용 -->
+      <div>
+        <label class="block text-sm font-medium mb-1">내용</label>
+        <textarea id="content" rows="6" class="w-full px-4 py-2 border rounded-md" required></textarea>
+      </div>
+      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">저장</button>
+    </form>
+
+    <div id="saved-entry" class="mt-10 hidden bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-bold mb-2">저장된 일기</h2>
+      <p id="saved-date" class="text-sm text-gray-600"></p>
+      <p id="saved-mood" class="mt-2"></p>
+      <div id="saved-photo" class="mt-2"></div>
+      <p id="saved-content" class="mt-2 whitespace-pre-line"></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('diary-form');
+    const preview = document.getElementById('preview');
+
+    // 사진 선택 시 미리보기
+    form.photo.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          preview.innerHTML = `<img src="${event.target.result}" class="w-40 h-40 object-cover rounded" />`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.innerHTML = '';
+      }
+    });
+
+    // 폼 제출 시 LocalStorage에 저장 및 화면에 표시
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entry = {
+        date: form.date.value,
+        mood: form.mood.value,
+        content: form.content.value,
+        photo: preview.querySelector('img')?.src || ''
+      };
+      localStorage.setItem('diaryEntry', JSON.stringify(entry));
+      renderSavedEntry();
+    });
+
+    // 저장된 일기 렌더링
+    function renderSavedEntry() {
+      const entry = JSON.parse(localStorage.getItem('diaryEntry'));
+      if (!entry) return;
+      document.getElementById('saved-entry').classList.remove('hidden');
+      document.getElementById('saved-date').textContent = `날짜: ${entry.date}`;
+      document.getElementById('saved-mood').textContent = `기분: ${entry.mood}`;
+      if (entry.photo) {
+        document.getElementById('saved-photo').innerHTML = `<img src="${entry.photo}" class="w-40 h-40 object-cover rounded" />`;
+      } else {
+        document.getElementById('saved-photo').innerHTML = '';
+      }
+      document.getElementById('saved-content').textContent = entry.content;
+    }
+
+    window.addEventListener('DOMContentLoaded', renderSavedEntry);
+  </script>
+</body>
+</html>

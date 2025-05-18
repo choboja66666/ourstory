@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문둥닷컴 - 홈</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      scroll-behavior: smooth;
+      /* 로컬 경로를 배경 이미지로 사용 */
+      background: url("file:///C:/homepage/index/KakaoTalk_20250518_235854784.jpg") no-repeat center center fixed;
+      background-size: cover;
+    }
+    .hero-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 10;
+    }
+    @keyframes float {
+      0%   { transform: translateY(0); }
+      50%  { transform: translateY(-15px); }
+      100% { transform: translateY(0); }
+    }
+    .animate-float {
+      animation: float 5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="antialiased text-gray-100">
+
+  <!-- 네비게이션 바 -->
+  <header class="fixed top-0 w-full z-20 bg-gray-900">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+      <a href="index.html" class="text-2xl font-bold text-white">문둥닷컴</a>
+      <nav class="hidden md:flex space-x-8">
+        <a href="index.html" class="text-white hover:text-indigo-300">홈</a>
+        <a href="diary.html" class="text-gray-300 hover:text-white">일기</a>
+        <a href="gallery.html" class="text-gray-300 hover:text-white">갤러리</a>
+        <a href="calendar.html" class="text-gray-300 hover:text-white">갤린더</a>
+      </nav>
+      <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-white focus:outline-none">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    <div id="mobile-menu" class="hidden bg-gray-800">
+      <div class="px-4 py-4 space-y-2">
+        <a href="index.html" class="block text-white px-2 py-1 rounded hover:bg-gray-700">홈</a>
+        <a href="diary.html" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">일기</a>
+        <a href="gallery.html" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">갤러리</a>
+        <a href="calendar.html" class="block text-gray-300 px-2 py-1 rounded hover:bg-gray-700 hover:text-white">갤린더</a>
+      </div>
+    </div>
+  </header>
+  <script>
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  </script>
+
+  <!-- 히어로 섹션 -->
+  <section id="home" class="pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden" style="min-height: 100vh">
+    <!-- 어두운 오버레이 -->
+    <div class="hero-overlay"></div>
+    <!-- 컨텐츠(로고, 타이틀 등) -->
+    <div class="hero-content">
+      <div class="animate-float mb-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 3c.132 0 .263.002.394.006A9 9 0 1111.607 3C11.737 3 11.869 3 12 3z"/>
+        </svg>
+      </div>
+      <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4">문둥닷컴에 오신 것을 환영합니다</h1>
+      <p class="text-lg md:text-xl lg:text-2xl text-indigo-100 mb-8 max-w-2xl">문둥이와 나의 일상 공유</p>
+    </div>
+  </section>
+</body>
+</html>

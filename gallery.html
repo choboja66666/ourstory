@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문둥닷컴 - 갤러리</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f3f4f6;
+      padding-top: 4rem;
+    }
+    .back-link {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      color: #1f2937;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 홈으로</a>
+
+  <div class="max-w-6xl mx-auto px-4 py-10">
+    <h1 class="text-3xl font-bold text-indigo-600 text-center mb-6">우리의 갤러리</h1>
+    <div class="text-center mb-4">
+      <input type="file" id="imageInput" multiple accept="image/*" class="mb-2">
+      <button id="saveBtn" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">저장</button>
+    </div>
+    <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'photoGallery';
+    const gallery = document.getElementById('gallery');
+    const input = document.getElementById('imageInput');
+    const saveBtn = document.getElementById('saveBtn');
+    let imageList = [];
+
+    // 페이지 로드 시 로컬스토리지에서 불러오기
+    function loadGallery() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) imageList = JSON.parse(saved);
+      renderGallery();
+    }
+
+    // 갤러리 렌더링
+    function renderGallery() {
+      gallery.innerHTML = '';
+      imageList.forEach(({ date, dataURL }) => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded shadow p-4';
+        div.innerHTML = `
+          <img src="${dataURL}" class="w-full h-48 object-cover rounded mb-2" />
+          <p class="text-sm text-gray-600">${date}</p>
+        `;
+        gallery.appendChild(div);
+      });
+    }
+
+    // 파일 선택 시 바로 미리보기 데이터 준비
+    input.addEventListener('change', () => {
+      const files = [...input.files];
+      const readers = files.map(file => {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = e => resolve({
+            date: new Date().toLocaleString(),
+            dataURL: e.target.result
+          });
+          reader.readAsDataURL(file);
+        });
+      });
+      Promise.all(readers).then(results => {
+        imageList.push(...results);
+        renderGallery();
+      });
+    });
+
+    // 저장 버튼 클릭 시 로컬스토리지에 저장
+    saveBtn.addEventListener('click', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(imageList));
+      alert('사진이 저장되었습니다!');
+    });
+
+    window.addEventListener('DOMContentLoaded', loadGallery);
+  </script>
+</body>
+</html>
