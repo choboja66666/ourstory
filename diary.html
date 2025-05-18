@@ -1,137 +1,92 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>문둥닷컴 - 일기장</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Noto Sans KR', sans-serif; background: #f3f4f6; padding-top: 4rem; }
-    .back-link {
-      position: absolute; top: 1rem; left: 1rem;
-      background: rgba(255,255,255,0.7); padding: 0.5rem 1rem;
-      border-radius: 0.375rem; font-weight: 500; color: #1f2937; text-decoration: none;
-    }
-    .back-link:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-<a href="index.html" class="back-link">← 홈으로</a>
-
-<div class="max-w-3xl mx-auto px-6 py-12 space-y-12">
-  <section>
-    <h1 class="text-3xl font-bold text-indigo-600 mb-6">일기 작성</h1>
-    <form id="diary-form" class="space-y-6 bg-white p-6 rounded-lg shadow">
-      <div>
-        <label class="block text-sm font-medium mb-1">날짜</label>
-        <input type="date" id="date" class="w-full px-4 py-2 border rounded-md" required />
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">기분</label>
-        <select id="mood" class="w-full px-4 py-2 border rounded-md">
-          <option>😊 행복</option><option>😐 보통</option><option>😢 슬픔</option><option>😠 화남</option><option>😴 피곤</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">사진 첨부</label>
-        <input type="file" id="photo" accept="image/*" class="w-full" />
-        <div id="preview" class="mt-2"></div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">내용</label>
-        <textarea id="content" rows="6" class="w-full px-4 py-2 border rounded-md" required></textarea>
-      </div>
-      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">저장</button>
-    </form>
-  </section>
-
-  <section>
-    <h2 class="text-2xl font-bold text-indigo-600 mb-4">일기 목록</h2>
-    <div id="entriesList" class="space-y-6"></div>
-  </section>
-</div>
-
-<!-- ✅ Firebase 연동 -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+  import { db, storage } from './firebase.js';
+  import {
+    collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+  import {
+    ref, uploadBytes, getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-storage.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDxzmgN0tAJv27T2h2JWsnpgQDZNoUguns",
-    authDomain: "ourstory-shared.firebaseapp.com",
-    projectId: "ourstory-shared",
-    storageBucket: "ourstory-shared.appspot.com",
-    messagingSenderId: "912303672959",
-    appId: "1:912303672959:web:d86696d49305c86877794a",
-    measurementId: "G-HJL3VM7J73"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
+  const diaryCol = collection(db, 'diary');
   const form = document.getElementById('diary-form');
-  const preview = document.getElementById('preview');
+  const list = document.getElementById('entriesList');
   const photoInput = document.getElementById('photo');
-  const entriesList = document.getElementById('entriesList');
 
-  let photoDataURL = '';
+  let editingId = null;
 
-  // ✅ 이미지 미리보기 및 리사이징
-  photoInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      photoDataURL = event.target.result;
-      preview.innerHTML = `<img src="${photoDataURL}" class="w-40 h-40 object-cover rounded" />`;
-    };
-    reader.readAsDataURL(file);
-  });
+  // 업로드된 사진 Firebase Storage에 저장
+  async function uploadPhoto(file) {
+    const storageRef = ref(storage, 'diary/' + Date.now() + '_' + file.name);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
+  }
 
-  // ✅ 폼 제출 시 Firestore에 저장
+  // 저장 또는 수정
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const newEntry = {
-      date: form.date.value,
-      mood: form.mood.value,
-      content: form.content.value,
-      photo: photoDataURL,
-      createdAt: new Date()
-    };
-    try {
-      await addDoc(collection(db, "diary"), newEntry);
-      form.reset();
-      preview.innerHTML = '';
-      photoDataURL = '';
-    } catch (err) {
-      console.error("저장 실패:", err);
-      alert("저장에 실패했습니다.");
+    const date = form.date.value;
+    const mood = form.mood.value;
+    const content = form.content.value;
+    let photoUrl = '';
+
+    if (photoInput.files[0]) {
+      photoUrl = await uploadPhoto(photoInput.files[0]);
     }
+
+    if (editingId) {
+      await updateDoc(doc(db, 'diary', editingId), { date, mood, content, photo: photoUrl });
+      editingId = null;
+    } else {
+      await addDoc(diaryCol, { date, mood, content, photo: photoUrl });
+    }
+
+    form.reset();
+    loadEntries();
   });
 
-  // ✅ 실시간으로 데이터 불러오기
-  onSnapshot(collection(db, "diary"), (snapshot) => {
-    entriesList.innerHTML = '';
+  async function loadEntries() {
+    list.innerHTML = '';
+    const snapshot = await getDocs(diaryCol);
     snapshot.forEach(docSnap => {
-      const d = docSnap.data();
+      const entry = docSnap.data();
       const div = document.createElement('div');
-      div.className = 'bg-white rounded-lg shadow p-4';
+      div.className = 'p-4 bg-white rounded shadow mb-4';
       div.innerHTML = `
-        <div class="flex justify-between mb-2">
-          <p class="text-sm text-gray-600">${d.date} / ${d.mood}</p>
-          <button class="text-red-500 text-sm" data-id="${docSnap.id}">삭제</button>
-        </div>
-        ${d.photo ? `<img src="${d.photo}" class="w-full h-48 object-cover mb-2 rounded" />` : ''}
-        <p class="whitespace-pre-line">${d.content}</p>
+        <p><strong>날짜:</strong> ${entry.date}</p>
+        <p><strong>기분:</strong> ${entry.mood}</p>
+        ${entry.photo ? `<img src="${entry.photo}" class="w-32 h-32 object-cover mt-2" />` : ''}
+        <p class="mt-2">${entry.content}</p>
+        <button class="edit text-yellow-600" data-id="${docSnap.id}">수정</button>
+        <button class="delete text-red-600 ml-4" data-id="${docSnap.id}">삭제</button>
       `;
-      div.querySelector('button').addEventListener('click', async () => {
-        if (confirm("이 일기를 삭제하시겠습니까?")) {
-          await deleteDoc(doc(db, "diary", docSnap.id));
-        }
-      });
-      entriesList.appendChild(div);
+      list.appendChild(div);
     });
-  });
+
+    // 이벤트 위임
+    list.querySelectorAll('.edit').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const entryDoc = await getDocs(diaryCol);
+        entryDoc.forEach(docSnap => {
+          if (docSnap.id === id) {
+            const entry = docSnap.data();
+            form.date.value = entry.date;
+            form.mood.value = entry.mood;
+            form.content.value = entry.content;
+            editingId = id;
+          }
+        });
+      })
+    );
+
+    list.querySelectorAll('.delete').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        await deleteDoc(doc(db, 'diary', id));
+        loadEntries();
+      })
+    );
+  }
+
+  window.addEventListener('DOMContentLoaded', loadEntries);
 </script>
-</body>
-</html>
