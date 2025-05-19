@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>우리의 일기장</title>
+  <title>실시간 일기장</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -23,13 +23,19 @@
       text-decoration: none;
     }
     .back-link:hover { text-decoration: underline; }
+    /* 목록이 비어있을 때 문구 */
+    .empty-msg {
+      text-align: center;
+      color: #999;
+      margin-top: 2rem;
+    }
   </style>
 </head>
 <body>
   <a href="index.html" class="back-link">← 홈으로</a>
 
   <div class="max-w-3xl mx-auto px-6 py-12 space-y-8">
-    <!-- 폼 섹션 -->
+    <!-- 1) 일기 작성 폼 섹션 -->
     <section>
       <h1 class="text-3xl font-bold text-indigo-600 mb-6">일기 작성</h1>
       <form id="diary-form" class="space-y-4 bg-white p-6 rounded-lg shadow">
@@ -60,18 +66,25 @@
       </form>
     </section>
 
-    <!-- 목록 섹션 -->
+    <!-- 2) 저장된 일기 목록 섹션 -->
     <section>
       <h2 class="text-2xl font-bold text-indigo-600 mb-4">저장된 일기 목록</h2>
       <div id="entriesList" class="space-y-6"></div>
+      <!-- 목록이 비어있을 때 표시될 문구 -->
+      <p id="emptyMessage" class="empty-msg hidden">아직 저장된 일기가 없습니다.</p>
     </section>
   </div>
 
-  <!-- Firebase 모듈 -->
+  <!-- Firebase SDK 불러오기 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-storage.js";
+    import {
+      getFirestore, collection, addDoc,
+      deleteDoc, doc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-storage.js";
 
     // 1) Firebase 설정
     const firebaseConfig = {
@@ -88,30 +101,32 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 2) DOM 참조
+    // 2) 컬렉션 참조
+    const diaryRef = collection(db, "diaries");
+
+    // 3) DOM 요소 참조
     const form = document.getElementById("diary-form");
     const entriesList = document.getElementById("entriesList");
+    const emptyMessage = document.getElementById("emptyMessage");
     const photoInput = document.getElementById("photo");
-    const preview = document.getElementById("preview");
+    const previewEl = document.getElementById("preview");
 
-    // 3) 선택된 사진 파일과 업로드된 Storage 경로
     let selectedFile = null;
 
-    // 4) 사진 미리보기
+    // 4) 사진 미리보기 로직
     photoInput.addEventListener("change", (e) => {
-      selectedFile = e.target.files[0];
-      if (!selectedFile) {
-        preview.innerHTML = "";
-        return;
+      selectedFile = e.target.files[0] || null;
+      previewEl.innerHTML = "";
+      if (selectedFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          previewEl.innerHTML = `<img src="${event.target.result}" class="w-40 h-40 object-cover rounded" />`;
+        };
+        reader.readAsDataURL(selectedFile);
       }
-      const reader = new FileReader();
-      reader.onload = event => {
-        preview.innerHTML = `<img src="${event.target.result}" class="w-40 h-40 object-cover rounded" />`;
-      };
-      reader.readAsDataURL(selectedFile);
     });
 
-    // 5) 폼 제출: 사진 업로드 → Firestore에 URL 저장
+    // 5) 폼 제출 → 사진 업로드 → Firestore에 저장 → 목록 자동 갱신
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -120,18 +135,15 @@
       const contentValue = form.content.value;
       let photoUrl = "";
 
-      // 사진이 선택된 경우 Storage에 업로드
       if (selectedFile) {
-        // storage 참조 경로: diaries/타임스탬프_파일명
+        // Storage에 업로드
         const storageRef = ref(storage, `diaries/${Date.now()}_${selectedFile.name}`);
-        // 업로드
         await uploadBytes(storageRef, selectedFile);
-        // 다운로드 URL 얻기
         photoUrl = await getDownloadURL(storageRef);
       }
 
       // Firestore에 문서 추가
-      await addDoc(collection(db, "diaries"), {
+      await addDoc(diaryRef, {
         date: dateValue,
         mood: moodValue,
         content: contentValue,
@@ -139,28 +151,37 @@
         timestamp: Date.now()
       });
 
-      // 폼 리셋
       form.reset();
-      preview.innerHTML = "";
+      previewEl.innerHTML = "";
       selectedFile = null;
+
+      alert("저장되었습니다.");
+      // onSnapshot이 자동으로 목록을 갱신하므로 별도 loadEntries 호출 불필요
     });
 
-    // 6) 실시간으로 Firestore에서 일기 목록 불러오기
-    onSnapshot(collection(db, "diaries"), (snapshot) => {
+    // 6) Firestore의 'diaries' 컬렉션을 실시간 구독(onSnapshot)
+    onSnapshot(diaryRef, (snapshot) => {
       entriesList.innerHTML = "";
-      snapshot.docs.sort((a, b) => b.data().timestamp - a.data().timestamp) // 최신 순 정렬
-                   .forEach((docSnap) => {
+
+      if (snapshot.empty) {
+        emptyMessage.classList.remove("hidden");
+        return;
+      } else {
+        emptyMessage.classList.add("hidden");
+      }
+
+      // 최신 순 정렬 (timestamp 내림차순)
+      const docs = snapshot.docs.sort((a, b) => b.data().timestamp - a.data().timestamp);
+
+      docs.forEach((docSnap) => {
         const data = docSnap.data();
-        const id = docSnap.id;
+        const entryId = docSnap.id;
 
         // 카드 요소 생성
         const card = document.createElement("div");
         card.className = "bg-white rounded-lg shadow p-4 space-y-2";
 
-        // 삭제 버튼
-        const deleteBtn = `<button data-id="${id}" class="deleteBtn text-red-500 text-sm hover:underline">삭제</button>`;
-
-        // 이미지 표시 (URL 있을 때만)
+        // 삭제 버튼 + 컨텐츠
         const imageTag = data.photo
           ? `<img src="${data.photo}" class="w-40 h-40 object-cover rounded" />`
           : "";
@@ -168,7 +189,7 @@
         card.innerHTML = `
           <div class="flex justify-between items-center">
             <p class="text-sm text-gray-600">날짜: ${data.date} / 기분: ${data.mood}</p>
-            ${deleteBtn}
+            <button data-id="${entryId}" class="deleteBtn text-red-500 text-sm hover:underline">삭제</button>
           </div>
           ${imageTag}
           <p class="whitespace-pre-line">${data.content}</p>
@@ -177,18 +198,11 @@
         entriesList.appendChild(card);
       });
 
-      // 삭제 기능 연결
-      document.querySelectorAll(".deleteBtn").forEach(btn => {
+      // 삭제 버튼 이벤트 연결
+      document.querySelectorAll(".deleteBtn").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-id");
-          const docRef = doc(db, "diaries", id);
-
-          // Firestore 문서 삭제
-          await deleteDoc(docRef);
-
-          // (선택) Firestore 문서 내의 photo URL을 Storage에서 삭제하려면:
-          // const photoPath = data.photo.match(/\/o\/(.+)\?alt/)[1]; // URL에서 경로 추출
-          // await deleteObject(ref(storage, decodeURIComponent(photoPath)));
+          const idToDelete = btn.getAttribute("data-id");
+          await deleteDoc(doc(db, "diaries", idToDelete));
         });
       });
     });
